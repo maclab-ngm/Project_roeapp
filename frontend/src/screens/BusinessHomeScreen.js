@@ -12,10 +12,11 @@ import {
   Alert,
   RefreshControl,
   ActivityIndicator,
-  Modal,
   TextInput,
   ScrollView,
+  Image,
 } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
 import { authAPI, userAPI, adAPI } from '../api/client';
 
 const TARGET_OPTIONS = [200, 500, 1000];
@@ -28,6 +29,7 @@ export default function BusinessHomeScreen({ navigation }) {
   const [myAds, setMyAds] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedTab, setSelectedTab] = useState('list'); // 'list' or 'create'
+  const [selectedImage, setSelectedImage] = useState(null);
 
   // 광고 등록 폼
   const [adForm, setAdForm] = useState({
@@ -38,7 +40,15 @@ export default function BusinessHomeScreen({ navigation }) {
 
   useEffect(() => {
     loadData();
+    requestPermissions();
   }, []);
+
+  const requestPermissions = async () => {
+    const { status } = await ImagePicker.resquestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('권한 필요', '갤러리 접근 권한이 필요합니다');
+    }
+  };
 
   const loadData = async () => {
     try {
@@ -89,6 +99,7 @@ export default function BusinessHomeScreen({ navigation }) {
             onPress: () => {
               // 폼 초기화 및 데이터 새로고침
               setAdForm({ title: '', description: '', target_count: 200 });
+              setSelectedImage(null);
               loadData();
               setSelectedTab('list');
             },
@@ -122,6 +133,16 @@ export default function BusinessHomeScreen({ navigation }) {
 
     return (
       <View style={styles.adCard}>
+        {/* 이미지 표시 */}
+        {item.image_url && (
+          <Image
+            source={{ url: `${API_BASE_URL}${item.image_url}`}}
+            style={styles.adImage}
+            resizeMode='cover'
+            />
+        )}
+
+
         <View style={styles.adCardHeader}>
           <View style={styles.adCardInfo}>
             <Text style={styles.adCardTitle}>{item.title}</Text>
@@ -285,6 +306,29 @@ export default function BusinessHomeScreen({ navigation }) {
         <ScrollView style={styles.content} contentContainerStyle={styles.formContent}>
           <Text style={styles.formTitle}>새 광고 만들기</Text>
 
+          {/* 이미지 선택 */}
+          <View style={styles.formSection}>
+            <Text style={styles.formLabel}>광고 이미지 (선택사항)</Text>
+            <TouchableOpacity
+              style={styles.imagePickerButton}
+              onPress={pickImage}
+            >
+              {selectedImage ? (
+                <Image 
+                  source={{ uri: selectedImage.uri }} 
+                  style={styles.selectedImage}
+                />
+              ) : (
+                <View style={styles.imagePlaceholder}>
+                  <Text style={styles.imagePlaceholderText}>📷</Text>
+                  <Text style={styles.imagePlaceholderSubtext}>
+                    이미지 선택
+                  </Text>
+                </View>
+              )}
+            </TouchableOpacity>
+          </View>
+
           <View style={styles.formSection}>
             <Text style={styles.formLabel}>광고 제목 *</Text>
             <TextInput
@@ -348,7 +392,7 @@ export default function BusinessHomeScreen({ navigation }) {
             <Text style={styles.infoText}>• 총 광고비: 100만원</Text>
             <Text style={styles.infoText}>• ROE 수수료: 40만원</Text>
             <Text style={styles.infoText}>• 사용 가능 포인트: 60만원</Text>
-            <Text style={styles.infoText}>• 지역: 종암동 고정</Text>
+            <Text style={styles.infoText}>• 지역: 성북구 전체</Text>
           </View>
 
           <TouchableOpacity
@@ -367,6 +411,9 @@ export default function BusinessHomeScreen({ navigation }) {
     </View>
   );
 }
+
+// // API_BASE_URL import 추가
+import { API_BASE_URL } from '../api/client';
 
 const styles = StyleSheet.create({
   container: {

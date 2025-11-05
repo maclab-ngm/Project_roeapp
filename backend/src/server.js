@@ -4,6 +4,7 @@
 
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 require('dotenv').config();
 
 const authRoutes = require('./routes/auth');
@@ -22,6 +23,9 @@ app.use(cors({
 })); // 모든 출처 허용 (프로덕션에서는 제한 필요)
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// 정적 파일 서빙 (이미지) - 추가!
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // 요청 로깅
 app.use((req, res, next) => {

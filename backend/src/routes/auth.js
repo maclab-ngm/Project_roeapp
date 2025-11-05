@@ -22,7 +22,14 @@ router.post('/signup', async (req, res) => {
       });
     }
 
-    const { email, password, name, user_type } = req.body;
+    const { 
+      email, 
+      password, 
+      name, 
+      user_type,
+      address,
+      business_type
+    } = req.body;
 
     // 입력 검증
     if (!email || !password || !name || !user_type) {
@@ -37,6 +44,22 @@ router.post('/signup', async (req, res) => {
       return res.status(400).json({ 
         success: false,
         error: '사용자 유형은 consumer 또는 business여야 합니다' 
+      });
+    }
+
+    // 소비자인 경우 주소 필수
+    if (user_type === 'consumer' && !address) {
+      return res.status(400).json({ 
+        success: false,
+        error: '주소를 입력해주세요' 
+      });
+    }
+
+    // 사업자인 경우 업종 필수
+    if (user_type === 'business' && !business_type) {
+      return res.status(400).json({ 
+        success: false,
+        error: '업종을 선택해주세요' 
       });
     }
 
@@ -61,10 +84,10 @@ router.post('/signup', async (req, res) => {
 
     // 사용자 생성
     const result = await client.query(
-      `INSERT INTO users (email, password, name, user_type, points) 
-       VALUES ($1, $2, $3, $4, 0)
-       RETURNING id, email, name, user_type, points, created_at`,
-      [email, hashedPassword, name, user_type]
+      `INSERT INTO users (email, password, name, user_type, points, address, business_type) 
+       VALUES ($1, $2, $3, $4, 0, $5, $6)
+       RETURNING id, email, name, user_type, points, address, business_type, created_at`,
+      [email, hashedPassword, name, user_type, address, business_type]
     );
 
     const user = result.rows[0];
@@ -89,7 +112,9 @@ router.post('/signup', async (req, res) => {
         email: user.email,
         name: user.name,
         user_type: user.user_type,
-        points: user.points
+        points: user.points,
+        address: user.address,
+        business_type: user.business_type
       }
     });
 

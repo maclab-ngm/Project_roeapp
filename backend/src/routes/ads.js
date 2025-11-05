@@ -6,6 +6,7 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../config/database');
 const authenticateToken = require('../middleware/auth');
+const upload = require('../middleware/upload');
 
 // MVP 고정값
 const TOTAL_BUDGET = 1000000; // 100만원
@@ -13,7 +14,7 @@ const USABLE_POINTS = 600000; // 60만원
 const TARGET_OPTIONS = [200, 500, 1000]; // 가능한 타겟 인원
 
 // 광고 생성 (사업자만)
-router.post('/', authenticateToken, async (req, res) => {
+router.post('/', authenticateToken, upload.single('image'), async (req, res) => {
   const client = await pool.connect();
   
   try {
@@ -26,6 +27,11 @@ router.post('/', authenticateToken, async (req, res) => {
     }
 
     const { title, description, target_count } = req.body;
+
+    // 이미지 URL 생성
+    const imageUrl = req.file 
+      ? `/uploads/${req.file.filename}` 
+      : null;
 
     // 입력 검증
     if (!title || !target_count) {
@@ -50,8 +56,8 @@ router.post('/', authenticateToken, async (req, res) => {
     const result = await client.query(
       `INSERT INTO ads (
         business_id, title, description, target_count,
-        point_per_user, remaining_count, status
-      ) VALUES ($1, $2, $3, $4, $5, $6, 'active')
+        point_per_user, remaining_count, status, image_url
+      ) VALUES ($1, $2, $3, $4, $5, $6, 'active', $7)
       RETURNING *`,
       [
         req.user.id,
@@ -59,7 +65,8 @@ router.post('/', authenticateToken, async (req, res) => {
         description || '',
         target_count,
         point_per_user,
-        target_count
+        target_count,
+        imageUrl
       ]
     );
 

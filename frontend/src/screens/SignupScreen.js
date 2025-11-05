@@ -17,6 +17,19 @@ import {
 } from 'react-native';
 import { authAPI } from '../api/client';
 
+// 주소 옵션 (동 단위)
+const ADDRESS_OPTIONS = [
+  '종암1동', '종암2동', '종암3동', '종암4동',
+  '성북동', '정릉1동', '정릉2동', '정릉3동', '정릉4동',
+  '길음1동', '길음2동', '돈암1동', '돈암2동', '안암동'
+];
+
+// 업종 옵션
+const BUSINESS_TYPES = [
+  '학원', '병원', '약국', '음식점', '카페', 
+  '미용실', '편의점', '서점', '문구점', '기타'
+];
+
 export default function SignupScreen({ navigation }) {
   const [loading, setLoading] = useState(false);
   const [userType, setUserType] = useState('consumer'); // 'consumer' or 'business'
@@ -24,12 +37,26 @@ export default function SignupScreen({ navigation }) {
     email: '',
     password: '',
     name: '',
+    address: '',
+    business_type: '',
   });
 
   const handleSignup = async () => {
     // 입력 검증
     if (!formData.email || !formData.password || !formData.name) {
       Alert.alert('오류', '모든 정보를 입력해주세요');
+      return;
+    }
+
+    // 소비자인 경우 주소 필수
+    if (userType === 'consumer' && !formData.address) {
+      Alert.alert('오류', '주소를 선택해주세요');
+      return;
+    }
+
+    // 사업자인 경우 업종 필수
+    if (userType === 'business' && !formData.business_type) {
+      Alert.alert('오류', '업종을 선택해주세요');
       return;
     }
 
@@ -94,7 +121,10 @@ export default function SignupScreen({ navigation }) {
                 styles.typeButton,
                 userType === 'consumer' && styles.typeButtonActive,
               ]}
-              onPress={() => setUserType('consumer')}
+              onPress={() => {
+                setUserType('consumer');
+                setFormData({ ...formData, business_type: '' });
+              }}
             >
               <Text
                 style={[
@@ -128,11 +158,11 @@ export default function SignupScreen({ navigation }) {
         {/* 입력 폼 */}
         <View style={styles.section}>
           <Text style={styles.label}>
-            이름 {userType === 'business' && '(학원명)'}
+            이름 {userType === 'business' && '(상호명)'}
           </Text>
           <TextInput
             style={styles.input}
-            placeholder={userType === 'business' ? '예: 종암영어학원' : '홍길동'}
+            placeholder={userType === 'business' ? '예: 종암수학학원' : '홍길동'}
             value={formData.name}
             onChangeText={(text) => setFormData({ ...formData, name: text })}
           />
@@ -161,10 +191,70 @@ export default function SignupScreen({ navigation }) {
           />
         </View>
 
+        {/* 소비자 전용: 주소 선택 */}
+        {userType === 'consumer' && (
+          <View style={styles.section}>
+            <Text style={styles.label}>주소 (동 단위) *</Text>
+            <ScrollView 
+              horizontal 
+              showsHorizontalScrollIndicator={false}
+              style={styles.optionsScroll}
+            >
+              {ADDRESS_OPTIONS.map((addr) => (
+                <TouchableOpacity
+                  key={addr}
+                  style={[
+                    styles.optionChip,
+                    formData.address === addr && styles.optionChipActive,
+                  ]}
+                  onPress={() => setFormData({ ...formData, address: addr })}
+                >
+                  <Text
+                    style={[
+                      styles.optionChipText,
+                      formData.address === addr && styles.optionChipTextActive,
+                    ]}
+                  >
+                    {addr}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        )}
+
+        {/* 사업자 전용: 업종 선택 */}
+        {userType === 'business' && (
+          <View style={styles.section}>
+            <Text style={styles.label}>업종 *</Text>
+            <View style={styles.businessTypeGrid}>
+              {BUSINESS_TYPES.map((type) => (
+                <TouchableOpacity
+                  key={type}
+                  style={[
+                    styles.businessTypeButton,
+                    formData.business_type === type && styles.businessTypeButtonActive,
+                  ]}
+                  onPress={() => setFormData({ ...formData, business_type: type })}
+                >
+                  <Text
+                    style={[
+                      styles.businessTypeText,
+                      formData.business_type === type && styles.businessTypeTextActive,
+                    ]}
+                  >
+                    {type}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        )}
+
         {/* MVP 안내 */}
         <View style={styles.infoBox}>
           <Text style={styles.infoText}>
-            📍 MVP 버전: 종암동 지역만 지원
+            📍 서비스 지역: 성북구 전체
           </Text>
           <Text style={styles.infoText}>
             💰 광고비: 100만원 / 포인트: 60만원 고정
@@ -261,6 +351,55 @@ const styles = StyleSheet.create({
     fontSize: 16,
     borderWidth: 1,
     borderColor: '#ddd',
+  },
+  optionsScroll: {
+    marginTop: 8,
+  },
+  optionChip: {
+    backgroundColor: '#fff',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 20,
+    marginRight: 8,
+    borderWidth: 2,
+    borderColor: '#ddd',
+  },
+  optionChipActive: {
+    backgroundColor: '#667eea',
+    borderColor: '#667eea',
+  },
+  optionChipText: {
+    fontSize: 14,
+    color: '#666',
+    fontWeight: '600',
+  },
+  optionChipTextActive: {
+    color: '#fff',
+  },
+  businessTypeGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  businessTypeButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: '#ddd',
+  },
+  businessTypeButtonActive: {
+    backgroundColor: '#764ba2',
+    borderColor: '#764ba2',
+  },
+  businessTypeText: {
+    fontSize: 14,
+    color: '#666',
+    fontWeight: '600',
+  },
+  businessTypeTextActive: {
+    color: '#fff',
   },
   infoBox: {
     backgroundColor: '#e3f2fd',
