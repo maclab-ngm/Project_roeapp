@@ -12,8 +12,9 @@ import {
   Alert,
   RefreshControl,
   ActivityIndicator,
+  Image, //추가!
 } from 'react-native';
-import { authAPI, userAPI, adAPI } from '../api/client';
+import { authAPI, userAPI, adAPI, API_BASE_URL } from '../api/client';
 
 export default function ConsumerHomeScreen({ navigation }) {
   const [loading, setLoading] = useState(false);
@@ -100,6 +101,15 @@ export default function ConsumerHomeScreen({ navigation }) {
 
   const renderAdCard = ({ item }) => (
     <View style={styles.adCard}>
+    {/* 이미지 표시 (신규) */}
+      {item.image_url && (
+        <Image 
+          source={{ uri: `${API_BASE_URL}${item.image_url}` }}
+          style={styles.adImage}
+          resizeMode="cover"
+        />
+      )}
+      
       <View style={styles.adHeader}>
         <View style={styles.adInfo}>
           <Text style={styles.adTitle}>{item.title}</Text>
@@ -284,7 +294,8 @@ const styles = StyleSheet.create({
   adCard: {
     backgroundColor: '#fff',
     borderRadius: 16,
-    padding: 16,
+    //padding: 16,
+    overflow: 'hidden',
     marginBottom: 12,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -292,10 +303,17 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
+  // 이미지 스타일 추가
+  adImage: {
+    width: '100%',
+    height: 200,
+    backgroundColor: '#f0f0f0',
+  },
   adHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 12,
+    padding: 16,
+    paddingBottom: 12,
   },
   adInfo: {
     flex: 1,

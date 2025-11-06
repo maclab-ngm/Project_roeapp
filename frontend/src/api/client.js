@@ -6,7 +6,7 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // API 베이스 URL - Mac IP 사용
-const API_BASE_URL = 'http://172.30.1.72:3000';
+const API_BASE_URL = 'http://172.30.1.60:3000';
 
 // Axios 인스턴스 생성
 const api = axios.create({
@@ -151,9 +151,41 @@ export const adAPI = {
     return await api.get('/api/ads/my');
   },
 
-  // 광고 생성 (사업자)
-  createAd: async (adData) => {
-    return await api.post('/api/ads', adData);
+  // 광고 생성 (사업자) - 이미지 업로드 추가!
+  createAd: async (adData, imageFile) => {
+    const token = await AsyncStorage.getItem('roe_token');
+    
+    // FormData 생성
+    const formData = new FormData();
+    formData.append('title', adData.title);
+    formData.append('description', adData.description);
+    formData.append('target_count', adData.target_count.toString());
+    
+    // 이미지가 있으면 추가
+    if (imageFile) {
+      const uriParts = imageFile.uri.split('.');
+      const fileType = uriParts[uriParts.length - 1];
+      
+      formData.append('image', {
+        uri: imageFile.uri,
+        name: `ad-image-${Date.now()}.${fileType}`,
+        type: `image/${fileType}`,
+      });
+    }
+
+    // axios 직접 사용 (multipart/form-data)
+    const response = await axios.post(
+      `${API_BASE_URL}/api/ads`,
+      formData,
+      {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data',
+        },
+      }
+    );
+
+    return response.data;
   },
 
   // 광고 시청 (소비자)
