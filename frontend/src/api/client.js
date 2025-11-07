@@ -6,7 +6,7 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // API 베이스 URL - Mac IP 사용
-const API_BASE_URL = 'http://172.30.1.60:3000';
+export const API_BASE_URL = 'http://192.168.45.214:3000';
 
 // Axios 인스턴스 생성
 const api = axios.create({

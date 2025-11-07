@@ -96,36 +96,24 @@ router.post('/', authenticateToken, upload.single('image'), async (req, res) => 
 // 광고 목록 조회 (소비자용)
 router.get('/available', authenticateToken, async (req, res) => {
   const client = await pool.connect();
-  
+
   try {
-    // 이미 본 광고 ID 조회
-    const viewedAds = await client.query(
-      'SELECT ad_id FROM ad_views WHERE user_id = $1',
-      [req.user.id]
-    );
-    
-    const viewedAdIds = viewedAds.rows.map(row => row.ad_id);
-    
-    // 볼 수 있는 광고 조회
-    let query = `
-      SELECT a.*, u.name as business_name 
+    // 모든 활성 광고를 조회하되, 이미 본 광고인지 여부를 포함
+    const query = `
+      SELECT a.*,
+             u.name as business_name,
+             EXISTS(
+               SELECT 1 FROM ad_views av
+               WHERE av.user_id = $1 AND av.ad_id = a.id
+             ) as is_viewed
       FROM ads a
       JOIN users u ON a.business_id = u.id
       WHERE a.status = 'active'
       AND a.remaining_count > 0
+      ORDER BY a.created_at DESC
     `;
-    
-    const params = [];
-    
-    // 이미 본 광고 제외
-    if (viewedAdIds.length > 0) {
-      query += ` AND a.id NOT IN (${viewedAdIds.map((_, i) => `$${i + 1}`).join(',')})`;
-      params.push(...viewedAdIds);
-    }
-    
-    query += ' ORDER BY a.created_at DESC';
-    
-    const result = await client.query(query, params);
+
+    const result = await client.query(query, [req.user.id]);
 
     res.json({
       success: true,
@@ -134,9 +122,9 @@ router.get('/available', authenticateToken, async (req, res) => {
 
   } catch (error) {
     console.error('광고 목록 조회 오류:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       success: false,
-      error: '서버 오류가 발생했습니다' 
+      error: '서버 오류가 발생했습니다'
     });
   } finally {
     client.release();

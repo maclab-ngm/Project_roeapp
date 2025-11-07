@@ -35,6 +35,7 @@ CREATE TABLE ads (
     point_per_user INTEGER NOT NULL,
     remaining_count INTEGER NOT NULL,
     status VARCHAR(20) DEFAULT 'active',
+    image_url VARCHAR(500),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

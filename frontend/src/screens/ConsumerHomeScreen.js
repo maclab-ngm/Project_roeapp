@@ -52,7 +52,10 @@ export default function ConsumerHomeScreen({ navigation }) {
   };
 
   const handleWatchAd = async (ad) => {
-    Alert.alert(
+
+    navigation.navigate('AdDetail', { ad }); //아래 파일 삭제 후 광고 보는 항목으로 추가
+
+    /* Alert.alert(
       '광고 시청',
       `이 광고를 시청하시겠습니까?\n\n💰 적립 포인트: ${ad.point_per_user.toLocaleString()}원`,
       [
@@ -82,7 +85,7 @@ export default function ConsumerHomeScreen({ navigation }) {
           },
         },
       ]
-    );
+    ); */
   };
 
   const handleLogout = () => {
@@ -99,46 +102,65 @@ export default function ConsumerHomeScreen({ navigation }) {
     ]);
   };
 
-  const renderAdCard = ({ item }) => (
-    <View style={styles.adCard}>
-    {/* 이미지 표시 (신규) */}
-      {item.image_url && (
-        <Image 
-          source={{ uri: `${API_BASE_URL}${item.image_url}` }}
-          style={styles.adImage}
-          resizeMode="cover"
-        />
-      )}
-      
-      <View style={styles.adHeader}>
-        <View style={styles.adInfo}>
-          <Text style={styles.adTitle}>{item.title}</Text>
-          <Text style={styles.businessName}>🏢 {item.business_name}</Text>
-          {item.description ? (
-            <Text style={styles.adDescription}>{item.description}</Text>
-          ) : null}
-        </View>
-        <View style={styles.pointBadge}>
-          <Text style={styles.pointText}>💰</Text>
-          <Text style={styles.pointAmount}>
-            {item.point_per_user.toLocaleString()}원
-          </Text>
-        </View>
-      </View>
+  const renderAdCard = ({ item }) => {
+    const isViewed = item.is_viewed;
 
-      <View style={styles.adFooter}>
-        <Text style={styles.adMeta}>
-          👥 남은 인원: {item.remaining_count}명
-        </Text>
-        <TouchableOpacity
-          style={styles.watchButton}
-          onPress={() => handleWatchAd(item)}
-        >
-          <Text style={styles.watchButtonText}>👁️ 광고 보기</Text>
-        </TouchableOpacity>
+    return (
+      <View style={[styles.adCard, isViewed && styles.adCardViewed]}>
+        {/* 이미 본 광고 배지 */}
+        {isViewed && (
+          <View style={styles.viewedBadge}>
+            <Text style={styles.viewedBadgeText}>✓ 시청 완료</Text>
+          </View>
+        )}
+
+        {/* 이미지 표시 */}
+        {item.image_url ? (
+          <Image
+            source={{ uri: `${API_BASE_URL}${item.image_url}` }}
+            style={styles.adImage}
+            resizeMode="cover"
+          />
+        ) : (
+          <View style={styles.noImagePlaceholder}>
+            <Text style={styles.noImageIcon}>📷</Text>
+            <Text style={styles.noImageText}>이미지가 없습니다</Text>
+          </View>
+        )}
+
+        <View style={styles.adHeader}>
+          <View style={styles.adInfo}>
+            <Text style={styles.adTitle}>{item.title}</Text>
+            <Text style={styles.businessName}>🏢 {item.business_name}</Text>
+            {item.description ? (
+              <Text style={styles.adDescription}>{item.description}</Text>
+            ) : null}
+          </View>
+          <View style={[styles.pointBadge, isViewed && styles.pointBadgeViewed]}>
+            <Text style={styles.pointText}>💰</Text>
+            <Text style={[styles.pointAmount, isViewed && styles.pointAmountViewed]}>
+              {item.point_per_user.toLocaleString()}원
+            </Text>
+          </View>
+        </View>
+
+        <View style={styles.adFooter}>
+          <Text style={styles.adMeta}>
+            👥 남은 인원: {item.remaining_count}명
+          </Text>
+          <TouchableOpacity
+            style={[styles.watchButton, isViewed && styles.watchButtonDisabled]}
+            onPress={() => handleWatchAd(item)}
+            disabled={isViewed}
+          >
+            <Text style={[styles.watchButtonText, isViewed && styles.watchButtonTextDisabled]}>
+              {isViewed ? '✓ 시청 완료' : '👁️ 광고 보기'}
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
-    </View>
-  );
+    );
+  };
 
   if (!user) {
     return (
@@ -294,7 +316,6 @@ const styles = StyleSheet.create({
   adCard: {
     backgroundColor: '#fff',
     borderRadius: 16,
-    //padding: 16,
     overflow: 'hidden',
     marginBottom: 12,
     shadowColor: '#000',
@@ -302,12 +323,54 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+    position: 'relative',
+  },
+  adCardViewed: {
+    opacity: 0.7,
+    borderWidth: 2,
+    borderColor: '#4caf50',
+  },
+  viewedBadge: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    backgroundColor: '#4caf50',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    zIndex: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 5,
+  },
+  viewedBadgeText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: 'bold',
   },
   // 이미지 스타일 추가
   adImage: {
     width: '100%',
     height: 200,
     backgroundColor: '#f0f0f0',
+  },
+  noImagePlaceholder: {
+    width: '100%',
+    height: 200,
+    backgroundColor: '#f0f0f0',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  noImageIcon: {
+    fontSize: 50,
+    marginBottom: 8,
+    opacity: 0.5,
+  },
+  noImageText: {
+    fontSize: 14,
+    color: '#999',
   },
   adHeader: {
     flexDirection: 'row',
@@ -343,6 +406,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  pointBadgeViewed: {
+    backgroundColor: '#e8f5e9',
+  },
   pointText: {
     fontSize: 20,
     marginBottom: 4,
@@ -352,11 +418,16 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#1976d2',
   },
+  pointAmountViewed: {
+    color: '#4caf50',
+  },
   adFooter: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    paddingHorizontal: 16,
     paddingTop: 12,
+    paddingBottom: 16,
     borderTopWidth: 1,
     borderTopColor: '#f0f0f0',
   },
@@ -370,10 +441,16 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 8,
   },
+  watchButtonDisabled: {
+    backgroundColor: '#e0e0e0',
+  },
   watchButtonText: {
     color: '#fff',
     fontSize: 14,
     fontWeight: 'bold',
+  },
+  watchButtonTextDisabled: {
+    color: '#999',
   },
   emptyContainer: {
     flex: 1,

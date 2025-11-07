@@ -8,12 +8,12 @@ import { createStackNavigator } from '@react-navigation/stack';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { StatusBar } from 'expo-status-bar';
 
-// 화면 컴포넌트
 import WelcomeScreen from './src/screens/WelcomeScreen';
 import SignupScreen from './src/screens/SignupScreen';
 import LoginScreen from './src/screens/LoginScreen';
 import ConsumerHomeScreen from './src/screens/ConsumerHomeScreen';
 import BusinessHomeScreen from './src/screens/BusinessHomeScreen';
+import AdDetailScreen from './src/screens/AdDetailScreen';
 
 const Stack = createStackNavigator();
 
@@ -61,6 +61,7 @@ export default function App() {
           <Stack.Screen name="Login" component={LoginScreen} />
           <Stack.Screen name="ConsumerHome" component={ConsumerHomeScreen} />
           <Stack.Screen name="BusinessHome" component={BusinessHomeScreen} />
+          <Stack.Screen name="AdDetail" component={AdDetailScreen} />
         </Stack.Navigator>
       </NavigationContainer>
     </>
